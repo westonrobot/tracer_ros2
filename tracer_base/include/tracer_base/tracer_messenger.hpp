@@ -18,7 +18,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "tracer_msgs/msg/tracer_status.hpp"
 #include "tracer_msgs/msg/tracer_light_cmd.hpp"
@@ -54,10 +54,11 @@ class TracerMessenger {
         "/cmd_vel", 5,
         std::bind(&TracerMessenger::TwistCmdCallback, this,
                   std::placeholders::_1));
-    light_cmd_sub_ = node_->create_subscription<tracer_msgs::msg::TracerLightCmd>(
-        "/light_control", 5,
-        std::bind(&TracerMessenger::LightCmdCallback, this,
-                  std::placeholders::_1));
+    light_cmd_sub_ =
+        node_->create_subscription<tracer_msgs::msg::TracerLightCmd>(
+            "/light_control", 5,
+            std::bind(&TracerMessenger::LightCmdCallback, this,
+                      std::placeholders::_1));
 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
   }
@@ -170,8 +171,7 @@ class TracerMessenger {
     }
     // ROS_INFO("Cmd received:%f, %f", msg->linear.x, msg->angular.z);
   }
-  void SetTracerMotionCommand(const geometry_msgs::msg::Twist::SharedPtr msg)
-  {
+  void SetTracerMotionCommand(const geometry_msgs::msg::Twist::SharedPtr msg) {
     tracer_->SetMotionCommand(msg->linear.x, msg->angular.z);
   }
 
@@ -180,62 +180,57 @@ class TracerMessenger {
       if (msg->cmd_ctrl_allowed) {
         LightCommandMessage cmd;
 
-        switch (msg->front_mode)
-        {
-          case tracer_msgs::msg::TracerLightCmd::LIGHT_CONST_OFF:
-          {
+        switch (msg->front_mode) {
+          case tracer_msgs::msg::TracerLightCmd::LIGHT_CONST_OFF: {
             cmd.front_light.mode = CONST_OFF;
             break;
           }
-          case tracer_msgs::msg::TracerLightCmd::LIGHT_CONST_ON:
-          {
+          case tracer_msgs::msg::TracerLightCmd::LIGHT_CONST_ON: {
             cmd.front_light.mode = CONST_ON;
             break;
           }
-          case tracer_msgs::msg::TracerLightCmd::LIGHT_BREATH:
-          {
+          case tracer_msgs::msg::TracerLightCmd::LIGHT_BREATH: {
             cmd.front_light.mode = BREATH;
             break;
           }
-          case tracer_msgs::msg::TracerLightCmd::LIGHT_CUSTOM:
-          {
+          case tracer_msgs::msg::TracerLightCmd::LIGHT_CUSTOM: {
             cmd.front_light.mode = CUSTOM;
             cmd.front_light.custom_value = msg->front_custom_value;
             break;
           }
         }
 
-          // switch (msg->rear_mode)
-          // {
-          //   case tracer_msgs::TracerLightCmd::LIGHT_CONST_OFF:
-          //   {
-          //       cmd.rear_light.mode = CONST_OFF;
-          //       break;
-          //   }
-          //   case tracer_msgs::TracerLightCmd::LIGHT_CONST_ON:
-          //   {
-          //       cmd.rear_light.mode = CONST_ON;
-          //       break;
-          //   }
-          //   case tracer_msgs::TracerLightCmd::LIGHT_BREATH:
-          //   {
-          //       cmd.rear_light.mode = BREATH;
-          //       break;
-          //   }
-          //   case tracer_msgs::TracerLightCmd::LIGHT_CUSTOM:
-          //   {
-          //       cmd.rear_light.mode = CUSTOM;
-          //       cmd.rear_light.custom_value = msg->rear_custom_value;
-          //       break;
-          //   }
-          // }
-        tracer_->SetLightCommand(cmd.front_light.mode,cmd.front_light.custom_value);
-        } 
-      } else {
+        // switch (msg->rear_mode)
+        // {
+        //   case tracer_msgs::TracerLightCmd::LIGHT_CONST_OFF:
+        //   {
+        //       cmd.rear_light.mode = CONST_OFF;
+        //       break;
+        //   }
+        //   case tracer_msgs::TracerLightCmd::LIGHT_CONST_ON:
+        //   {
+        //       cmd.rear_light.mode = CONST_ON;
+        //       break;
+        //   }
+        //   case tracer_msgs::TracerLightCmd::LIGHT_BREATH:
+        //   {
+        //       cmd.rear_light.mode = BREATH;
+        //       break;
+        //   }
+        //   case tracer_msgs::TracerLightCmd::LIGHT_CUSTOM:
+        //   {
+        //       cmd.rear_light.mode = CUSTOM;
+        //       cmd.rear_light.custom_value = msg->rear_custom_value;
+        //       break;
+        //   }
+        // }
+        tracer_->SetLightCommand(cmd.front_light.mode,
+                                 cmd.front_light.custom_value);
+      }
+    } else {
       std::cout << "simulated robot received light control cmd" << std::endl;
     }
   }
-  
 
   geometry_msgs::msg::Quaternion createQuaternionMsgFromYaw(double yaw) {
     tf2::Quaternion q;

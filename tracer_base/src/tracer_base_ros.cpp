@@ -15,29 +15,39 @@
 namespace westonrobot {
 TracerBaseRos::TracerBaseRos(std::string node_name)
     : rclcpp::Node(node_name), keep_running_(false) {
-  this->declare_parameter("port_name");   //声明参数
+  this->declare_parameter("port_name", "can0");
 
-  this->declare_parameter("odom_frame");
-  this->declare_parameter("base_frame");
-  this->declare_parameter("odom_topic_name");
+  this->declare_parameter("odom_frame", "odom");
+  this->declare_parameter("base_frame", "base_link");
+  this->declare_parameter("odom_topic_name", "odom");
 
-  this->declare_parameter("is_tracer_mini");
-  this->declare_parameter("simulated_robot");
-  this->declare_parameter("control_rate");
+  this->declare_parameter("is_tracer_mini", false);
+  this->declare_parameter("simulated_robot", false);
+  this->declare_parameter("control_rate", 50);
 
   LoadParameters();
 }
 
 void TracerBaseRos::LoadParameters() {
-  this->get_parameter_or<std::string>("port_name", port_name_, "can0");//获取参数
+  port_name_ =
+      this->get_parameter("port_name").get_parameter_value().get<std::string>();
 
-  this->get_parameter_or<std::string>("odom_frame", odom_frame_, "odom");
-  this->get_parameter_or<std::string>("base_frame", base_frame_, "base_link");
-  this->get_parameter_or<std::string>("odom_topic_name", odom_topic_name_,
-                                      "odom");
-  this->get_parameter_or<bool>("is_tracer_mini", is_tracer_mini_, false);
-  this->get_parameter_or<bool>("simulated_robot", simulated_robot_, false);
-  this->get_parameter_or<int>("control_rate", sim_control_rate_, 50);
+  odom_frame_ = this->get_parameter("odom_frame")
+                    .get_parameter_value()
+                    .get<std::string>();
+  base_frame_ = this->get_parameter("base_frame")
+                    .get_parameter_value()
+                    .get<std::string>();
+  odom_topic_name_ = this->get_parameter("odom_topic_name")
+                         .get_parameter_value()
+                         .get<std::string>();
+
+  is_tracer_mini_ =
+      this->get_parameter("is_tracer_mini").get_parameter_value().get<bool>();
+  simulated_robot_ =
+      this->get_parameter("simulated_robot").get_parameter_value().get<bool>();
+  sim_control_rate_ =
+      this->get_parameter("control_rate").get_parameter_value().get<int>();
 
   std::cout << "Loading parameters: " << std::endl;
   std::cout << "- port name: " << port_name_ << std::endl;
@@ -47,7 +57,6 @@ void TracerBaseRos::LoadParameters() {
 
   std::cout << "- is tracer mini: " << std::boolalpha << is_tracer_mini_
             << std::endl;
-
 
   std::cout << "- simulated robot: " << std::boolalpha << simulated_robot_
             << std::endl;
@@ -65,12 +74,12 @@ bool TracerBaseRos::Initialize() {
   ProtocolDetector detector;
   if (detector.Connect(port_name_)) {
     auto proto = detector.DetectProtocolVersion(5);
-  if (proto == ProtocolVersion::AGX_V2) {
+    if (proto == ProtocolVersion::AGX_V2) {
       std::cout << "Detected protocol: AGX_V2" << std::endl;
-    
-        robot_ = std::unique_ptr<TracerRobot>();
-        std::cout << "Creating interface for Tracer with AGX_V2 Protocol"
-                  << std::endl;  
+
+      robot_ = std::unique_ptr<TracerRobot>();
+      std::cout << "Creating interface for Tracer with AGX_V2 Protocol"
+                << std::endl;
     } else {
       std::cout << "Detected protocol: UNKONWN" << std::endl;
       return false;
@@ -89,7 +98,8 @@ void TracerBaseRos::Run() {
   // instantiate a ROS messenger
   // TracerMessenger messenger(robot_.get(),this);
   std::unique_ptr<TracerMessenger<TracerRobot>> messenger =
-      std::unique_ptr<TracerMessenger<TracerRobot>>(new TracerMessenger<TracerRobot>(robot_,this));
+      std::unique_ptr<TracerMessenger<TracerRobot>>(
+          new TracerMessenger<TracerRobot>(robot_, this));
 
   messenger->SetOdometryFrame(odom_frame_);
   messenger->SetBaseFrame(base_frame_);
@@ -120,6 +130,5 @@ void TracerBaseRos::Run() {
     rclcpp::spin_some(shared_from_this());
     rate.sleep();
   }
-  
 }
 }  // namespace westonrobot
