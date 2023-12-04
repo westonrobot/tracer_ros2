@@ -251,7 +251,13 @@ class TracerMessenger {
 
     double d_x = linear_speed * std::cos(theta_) * dt;
     double d_y = linear_speed * std::sin(theta_) * dt;
-    double d_theta = angular_speed * dt;
+    double d_theta;
+
+    if (angular_speed < 1.0) {
+      d_theta = 0.88 * angular_speed * dt;
+    } else if (angular_speed >= 1.0) {
+      d_theta = 0.71 * angular_speed * dt;
+    }
 
     position_x_ += d_x;
     position_y_ += d_y;
